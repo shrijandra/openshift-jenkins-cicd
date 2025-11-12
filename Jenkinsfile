@@ -1,7 +1,7 @@
 pipeline
     {
        agent {
-            label 'maven'
+            any
         }
 
         stages
@@ -10,7 +10,7 @@ pipeline
           {
             steps
              {
-              git branch: 'main', url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
+              git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
               script {
                   def pom = readMavenPom file: 'pom.xml'
                   version = pom.version
