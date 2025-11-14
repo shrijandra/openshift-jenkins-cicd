@@ -1,23 +1,22 @@
 pipeline
     {
-       agent {
-            any
-        }
+       agent any
 
-        stages
-        {
-          stage('Build App')
-          {
-            steps
-             {
-              git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
-              script {
-                  def pom = readMavenPom file: 'pom.xml'
-                  version = pom.version
-              }
-              sh "mvn install"
+    stages {
+        stage('Build App') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github-cred',
+                    url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
+
+                script {
+                    def pom = readMavenPom file: 'pom.xml'
+                    version = pom.version
+                }
+
+                sh "mvn install"
             }
-          }
+        }
           stage('Create Image Builder') {
             when {
               expression {
