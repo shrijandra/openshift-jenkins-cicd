@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        kubernetes {
-            label 'maven'
-        }   
-    }
+    agent { label 'maven' }
 
     stages {
 
