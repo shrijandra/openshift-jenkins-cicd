@@ -1,25 +1,20 @@
 pipeline
     {
-       agent any
+    agent {
+        docker {
+            image 'maven:3.8.8-openjdk-17'
+            args '-v $HOME/.m2:/root/.m2'
+        }
+    }
 
     stages {
         stage('Build App') {
             steps {
-                git branch: 'main',
-                    credentialsId: 'github-cred',
-                    url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
-
-                script {
-                    def pom = readMavenPom file: 'pom.xml'
-                    version = pom.version
-                }
-
-                withMaven(maven: 'M3') {
-                    sh 'mvn install'
-                }
-
+                git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
+                sh "mvn clean install"
             }
         }
+    }
           stage('Create Image Builder') {
             when {
               expression {
