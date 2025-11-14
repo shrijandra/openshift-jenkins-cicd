@@ -14,7 +14,10 @@ pipeline
                     version = pom.version
                 }
 
-                sh "mvn install"
+                withMaven(maven: 'M3') {
+                    sh 'mvn install'
+                }
+
             }
         }
           stage('Create Image Builder') {
