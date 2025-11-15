@@ -8,7 +8,7 @@ kind: Pod
 spec:
   containers:
   - name: maven
-    image: image-registry.openshift-image-registry.svc:5000/openshift/jenkins-agent-maven
+    image: image-registry.openshift-image-registry.svc:5000/openshift/jenkins-agent-base:latest
     command:
     - cat
     tty: true
