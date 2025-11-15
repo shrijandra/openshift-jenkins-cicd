@@ -1,14 +1,14 @@
 pipeline {
     agent {
         kubernetes {
-            label 'maven-ocp-agent'
+            label 'maven-agent'
             yaml """
 apiVersion: v1
 kind: Pod
 spec:
   containers:
   - name: maven
-    image: registry.redhat.io/openshift4/ose-jenkins-agent-maven
+    image: image-registry.openshift-image-registry.svc:5000/openshift/jenkins-agent-maven
     command:
     - cat
     tty: true
