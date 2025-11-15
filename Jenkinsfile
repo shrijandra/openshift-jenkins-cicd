@@ -8,20 +8,31 @@ kind: Pod
 spec:
   containers:
   - name: maven
-    image: image-registry.openshift-image-registry.svc:5000/<your-project>/my-custom-maven-agent:latest
+    image: image-registry.openshift-image-registry.svc:5000/openshift/jenkins-agent-base:latest
     command:
     - cat
     tty: true
 """
         }
     }
+
     stages {
-        stage('Build') {
+
+        stage('Build App') {
             steps {
-                sh 'mvn clean install -DskipTests'
+                container('maven') {
+                    // Clone Git repository using credentials
+                    git branch: 'main',
+                        credentialsId: 'github-cred',
+                        url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
+
+                    // Use Jenkins withMaven for dynamic Maven installation
+                    withMaven(maven: 'Maven 3.9.11') {
+                        sh 'mvn clean install -DskipTests'
+                    }
+                }
             }
         }
-    
 
         stage('Create Image Builder') {
             when {
@@ -50,14 +61,16 @@ spec:
 
         stage('Build Image') {
             steps {
-                sh "rm -rf ocp && mkdir -p ocp/deployments"
-                sh "cp target/*.jar ocp/deployments/"
+                container('maven') {
+                    sh "rm -rf ocp && mkdir -p ocp/deployments"
+                    sh "cp target/*.jar ocp/deployments/"
 
-                script {
-                    openshift.withCluster() {
-                        openshift.withProject() {
-                            openshift.selector("bc", "sample-app-jenkins-new")
-                                .startBuild("--from-dir=./ocp", "--follow", "--wait=true")
+                    script {
+                        openshift.withCluster() {
+                            openshift.withProject() {
+                                openshift.selector("bc", "sample-app-jenkins-new")
+                                    .startBuild("--from-dir=./ocp", "--follow", "--wait=true")
+                            }
                         }
                     }
                 }
@@ -84,6 +97,15 @@ spec:
                     }
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Application deployed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
         }
     }
 }
