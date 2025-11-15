@@ -8,25 +8,20 @@ kind: Pod
 spec:
   containers:
   - name: maven
-    image: image-registry.openshift-image-registry.svc:5000/openshift/jenkins-agent-base:latest
+    image: image-registry.openshift-image-registry.svc:5000/<your-project>/my-custom-maven-agent:latest
     command:
     - cat
     tty: true
 """
         }
     }
-
     stages {
-
-        stage('Build App') {
+        stage('Build') {
             steps {
-                git branch: 'main',
-                    credentialsId: 'github-cred',
-                    url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
-
-                sh "mvn clean install -DskipTests"
+                sh 'mvn clean install -DskipTests'
             }
         }
+    
 
         stage('Create Image Builder') {
             when {
