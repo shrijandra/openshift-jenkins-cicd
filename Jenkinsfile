@@ -1,7 +1,6 @@
 pipeline {
     agent {
         kubernetes {
-            // Dynamic pod template for this pipeline
             yaml """
 apiVersion: v1
 kind: Pod
@@ -11,35 +10,17 @@ metadata:
 spec:
   containers:
   - name: maven
-    image: maven:3.9.6-eclipse-temurin-17
+    image: default-route-openshift-image-registry.apps-crc.testing/openshift/jenkins-agent-base:latest
     command:
       - cat
     tty: true
-    volumeMounts:
-    - name: maven-cache
-      mountPath: /root/.m2
-  initContainers:
-  - name: install-oc
-    image: registry.access.redhat.com/ubi8/ubi
-    command:
-      - sh
-      - -c
-      - |
-        curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz \
-        | tar -xz && mv oc kubectl /usr/local/bin/
-    volumeMounts:
-    - name: maven-cache
-      mountPath: /root/.m2
-  volumes:
-  - name: maven-cache
-    emptyDir: {}
 """
         }
     }
 
     environment {
         APP_NAME = "sample-app-jenkins-new"
-        PROJECT = "auto"           // replace with your OpenShift project
+        PROJECT = "demo-project"           // replace with your OpenShift project
         IMAGE_STREAM = "openjdk-17"        // S2I builder image
     }
 
@@ -68,6 +49,7 @@ spec:
                         oc login --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) \
                                  --server=https://kubernetes.default.svc
                         oc project $PROJECT
+                        oc version
                     '''
                 }
             }
