@@ -10,7 +10,7 @@ metadata:
 spec:
   containers:
   - name: maven
-    image: default-route-openshift-image-registry.apps-crc.testing/openshift/jenkins-agent-maven:latest
+    image: default-route-openshift-image-registry.apps-crc.testing/openshift/jenkins-agent-base:latest
     command:
       - cat
     tty: true
@@ -21,7 +21,7 @@ spec:
     environment {
         APP_NAME = "sample-app-jenkins-new"
         PROJECT = "auto"
-        IMAGE_STREAM = "openjdk-17"  // Adjust if needed
+        IMAGE_STREAM = "openjdk-17"  // adjust to your OpenShift S2I image if needed
     }
 
     stages {
@@ -32,6 +32,23 @@ spec:
                     git branch: 'main',
                         url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git',
                         credentialsId: 'github-cred'
+                }
+            }
+        }
+
+        stage('Install Maven (if needed)') {
+            steps {
+                container('maven') {
+                    sh '''
+                        # Check if Maven is installed, install if missing
+                        if ! command -v mvn >/dev/null 2>&1; then
+                            echo "Installing Maven..."
+                            curl -L https://downloads.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz \
+                                | tar -xz -C /usr/local/
+                            ln -s /usr/local/apache-maven-3.9.6/bin/mvn /usr/local/bin/mvn
+                        fi
+                        mvn -version
+                    '''
                 }
             }
         }
