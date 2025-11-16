@@ -10,7 +10,7 @@ metadata:
 spec:
   containers:
   - name: maven
-    image: default-route-openshift-image-registry.apps-crc.testing/openshift/jenkins-agent-base:latest
+    image: default-route-openshift-image-registry.apps-crc.testing/openshift/jenkins-agent-maven:latest
     command:
       - cat
     tty: true
@@ -20,8 +20,8 @@ spec:
 
     environment {
         APP_NAME = "sample-app-jenkins-new"
-        PROJECT = "auto"           // replace with your OpenShift project
-        IMAGE_STREAM = "openjdk-17"        // S2I builder image
+        PROJECT = "auto"
+        IMAGE_STREAM = "openjdk-17"  // Adjust if needed
     }
 
     stages {
@@ -39,7 +39,7 @@ spec:
         stage('Maven Build') {
             steps {
                 container('maven') {
-                    sh "mvn -B clean package -DskipTests"
+                    sh 'mvn -B clean package -DskipTests'
                 }
             }
         }
