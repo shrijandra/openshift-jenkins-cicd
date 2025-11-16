@@ -29,7 +29,9 @@ spec:
         stage('Checkout Code') {
             steps {
                 container('maven') {
-                    git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
+                    git branch: 'main',
+                        url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git',
+                        credentialsId: 'github-cred'
                 }
             }
         }
