@@ -73,18 +73,27 @@ spec:
             }
         }
 
-        stage('Create BuildConfig if Missing') {
+        stage('Create BuildConfig') {
             steps {
-                container('maven') {
-                    sh """
-                        if ! oc get bc $APP_NAME >/dev/null 2>&1; then
-                            echo "Creating S2I BuildConfig..."
-                            oc new-build $IMAGE_STREAM~. --name=$APP_NAME --binary=true
-                        fi
-                    """
+                script {
+                    openshift.withCluster() {
+                        openshift.withProject('auto') {
+
+                            // Create new S2I binary build
+                            openshift.raw(
+                                "new-build",
+                                "--name=sample-app-jenkins-new",
+                                "--image-stream=ubi8-openjdk-17:latest",
+                                "--binary=true",
+                                "--strategy=source",
+                                "--to=sample-app-jenkins-new:latest"
+                            )
+                        }
+                    }
                 }
             }
         }
+
 
         stage('Start S2I Binary Build') {
             steps {
