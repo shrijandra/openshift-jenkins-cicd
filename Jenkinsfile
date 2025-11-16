@@ -49,17 +49,11 @@ spec:
                             tar -xzf /tmp/apache-maven-3.9.6-bin.tar.gz -C $HOME
                             export PATH=$MAVEN_HOME/bin:$PATH
                         fi
+                        # Add Maven to PATH and build
+                        export PATH=$HOME/apache-maven-3.9.6/bin:$PATH
                         mvn -version
+                        mvn -B clean package -DskipTests
                     '''
-                }
-            }
-        }
-
-
-        stage('Maven Build') {
-            steps {
-                container('maven') {
-                    sh 'mvn -B clean package -DskipTests'
                 }
             }
         }
