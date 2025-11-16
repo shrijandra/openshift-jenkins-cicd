@@ -8,6 +8,7 @@ metadata:
   labels:
     pipeline: maven-oc
 spec:
+  serviceAccountName: jenkins
   containers:
   - name: maven
     image: default-route-openshift-image-registry.apps-crc.testing/openshift/jenkins-agent-base:latest
