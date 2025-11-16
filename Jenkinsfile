@@ -1,19 +1,19 @@
 pipeline {
     agent {
         kubernetes {
-            label "maven"
+            // Dynamic pod template for this pipeline
             yaml """
 apiVersion: v1
 kind: Pod
 metadata:
   labels:
-    app: maven-agent
+    pipeline: maven-oc
 spec:
   containers:
   - name: maven
     image: maven:3.9.6-eclipse-temurin-17
     command:
-    - cat
+      - cat
     tty: true
     volumeMounts:
     - name: maven-cache
@@ -37,70 +37,82 @@ spec:
         }
     }
 
+    environment {
+        APP_NAME = "sample-app-jenkins-new"
+        PROJECT = "auto"           // replace with your OpenShift project
+        IMAGE_STREAM = "openjdk-17"        // S2I builder image
+    }
+
     stages {
 
-        stage('Build App') {
+        stage('Checkout Code') {
             steps {
                 container('maven') {
                     git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/kuldeepsingh99/openshift-jenkins-cicd.git'
-                    script {
-                        def pom = readMavenPom file: 'pom.xml'
-                        version = pom.version
-                    }
-                    sh "mvn -B clean install"
                 }
             }
         }
 
-        stage('Create Image Builder') {
+        stage('Maven Build') {
             steps {
                 container('maven') {
-                    script {
-                        openshift.withCluster() {
-                            openshift.withProject() {
-                                if (!openshift.selector("bc", "sample-app-jenkins-new").exists()) {
-                                    openshift.newBuild("--name=sample-app-jenkins-new",
-                                        "--image-stream=openjdk18-openshift:1.14-3",
-                                        "--binary=true")
-                                }
-                            }
-                        }
-                    }
+                    sh "mvn -B clean package -DskipTests"
                 }
             }
         }
 
-        stage('Build Image') {
+        stage('OpenShift Login') {
             steps {
                 container('maven') {
-                    sh "rm -rf ocp && mkdir -p ocp/deployments"
-                    sh "cp target/*.jar ocp/deployments/"
-
-                    script {
-                        openshift.withCluster() {
-                            openshift.withProject() {
-                                openshift.selector("bc", "sample-app-jenkins-new")
-                                    .startBuild("--from-dir=./ocp", "--follow", "--wait=true")
-                            }
-                        }
-                    }
+                    sh '''
+                        oc login --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) \
+                                 --server=https://kubernetes.default.svc
+                        oc project $PROJECT
+                    '''
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Create BuildConfig if Missing') {
             steps {
                 container('maven') {
-                    script {
-                        openshift.withCluster() {
-                            openshift.withProject() {
-                                if (!openshift.selector('dc', 'sample-app-jenkins-new').exists()) {
-                                    def app = openshift.newApp("sample-app-jenkins-new", "--as-deployment-config")
-                                    app.narrow("svc").expose()
-                                }
-                            }
-                        }
-                    }
+                    sh """
+                        if ! oc get bc $APP_NAME >/dev/null 2>&1; then
+                            echo "Creating S2I BuildConfig..."
+                            oc new-build $IMAGE_STREAM~. --name=$APP_NAME --binary=true
+                        fi
+                    """
+                }
+            }
+        }
+
+        stage('Start S2I Binary Build') {
+            steps {
+                container('maven') {
+                    sh """
+                        mkdir -p ocp
+                        cp target/*.jar ocp/
+                        oc start-build $APP_NAME --from-dir=ocp --follow --wait=true
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to OpenShift') {
+            steps {
+                container('maven') {
+                    sh """
+                        if ! oc get deployment $APP_NAME >/dev/null 2>&1; then
+                            oc create deployment $APP_NAME \
+                                --image=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest
+                            oc expose deployment $APP_NAME
+                            oc expose service $APP_NAME
+                        else
+                            oc set image deployment/$APP_NAME \
+                                $APP_NAME=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest
+                            oc rollout restart deployment/$APP_NAME
+                        fi
+                    """
                 }
             }
         }
