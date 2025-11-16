@@ -41,13 +41,13 @@ spec:
                 container('maven') {
                     sh '''
                         if ! command -v mvn >/dev/null 2>&1; then
-                        echo "Installing Maven..."
-                        curl -L --fail -o /tmp/apache-maven-3.9.6-bin.tar.gz \
-                        https://dlcdn.apache.org/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
-                        tar -xzf /tmp/apache-maven-3.9.6-bin.tar.gz -C /usr/local/
-                        ln -s /usr/local/apache-maven-3.9.6/bin/mvn /usr/local/bin/mvn
-                    fi
-                    mvn -version
+                            echo "Installing Maven..."
+                            curl -L --fail -o /tmp/apache-maven-3.9.6-bin.tar.gz \
+                                https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz
+                            tar -xzf /tmp/apache-maven-3.9.6-bin.tar.gz -C /usr/local/
+                            ln -s /usr/local/apache-maven-3.9.6/bin/mvn /usr/local/bin/mvn
+                        fi
+                        mvn -version
                     '''
                 }
             }
