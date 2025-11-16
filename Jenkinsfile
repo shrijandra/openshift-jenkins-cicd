@@ -63,7 +63,8 @@ spec:
                 container('maven') {
                     sh '''
                         oc login --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) \
-                                 --server=https://kubernetes.default.svc
+                                 --server=https://kubernetes.default.svc \
+                                 --insecure-skip-tls-verify
                         oc project $PROJECT
                         oc version
                     '''
