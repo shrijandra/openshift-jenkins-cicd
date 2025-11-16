@@ -20,7 +20,7 @@ spec:
 
     environment {
         APP_NAME = "sample-app-jenkins-new"
-        PROJECT = "demo-project"           // replace with your OpenShift project
+        PROJECT = "auto"           // replace with your OpenShift project
         IMAGE_STREAM = "openjdk-17"        // S2I builder image
     }
 
@@ -29,7 +29,7 @@ spec:
         stage('Checkout Code') {
             steps {
                 container('maven') {
-                    git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/kuldeepsingh99/openshift-jenkins-cicd.git'
+                    git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/shrijandra/openshift-jenkins-cicd.git'
                 }
             }
         }
