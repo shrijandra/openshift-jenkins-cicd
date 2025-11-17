@@ -18,7 +18,7 @@ spec:
     - cat
     tty: true
   - name: oc-cli
-    image: registry.access.redhat.com/openshift4/ose-cli:latest
+    image: quay.io/openshift/origin-cli:4.13
     command:
     - cat
     tty: true
