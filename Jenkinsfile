@@ -145,7 +145,8 @@ spec:
                     
                         if ! oc get deployment $APP_NAME >/dev/null 2>&1; then
                             oc create deployment $APP_NAME \
-                                --image=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest
+                                --image=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest \
+                                --port=8080
                             oc expose deployment $APP_NAME
                             oc expose service $APP_NAME
                         else
@@ -153,8 +154,6 @@ spec:
                                 $APP_NAME=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest
                             oc rollout restart deployment/$APP_NAME
                         fi
-                        # Expose service/route
-                        oc expose svc/${APP_NAME} --port=8080 || true
 
                         echo "Route (if created):"
                         oc get route ${APP_NAME} -o yaml || true
