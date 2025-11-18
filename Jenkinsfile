@@ -79,6 +79,7 @@ spec:
             steps {
                 container('maven') {
                     sh '''
+                        export PATH=$HOME/bin:$PATH
                         oc login --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) \
                                  --server=https://kubernetes.default.svc \
                                  --insecure-skip-tls-verify
