@@ -23,6 +23,7 @@ spec:
         APP_NAME = "sample-app-jenkins-new"
         PROJECT = "auto"
         IMAGE_STREAM = "openjdk-17"  // adjust to your OpenShift S2I image if needed
+        PATH_ADD = "/home/jenkins/apache-maven-3.9.6/bin:/home/jenkins/bin"
     }
 
     stages {
@@ -92,21 +93,20 @@ spec:
 
         stage('Create BuildConfig') {
             steps {
-                script {
-                    openshift.withCluster() {
-                        openshift.withProject('auto') {
+                container('maven') {
+                  sh '''
+                    export PATH=${PATH_ADD}:$PATH
 
-                            // Create new S2I binary build
-                            openshift.raw(
-                                "new-build",
-                                "--name=sample-app-jenkins-new",
-                                "--image-stream=ubi8-openjdk-17:latest",
-                                "--binary=true",
-                                "--strategy=source",
-                                "--to=sample-app-jenkins-new:latest"
-                            )
-                        }
-                    }
+            # Delete existing BC (optional) to ensure created state - safe for CI
+                    oc delete bc ${APP_NAME} --ignore-not-found
+
+            # Create a binary S2I BuildConfig using ubi8-openjdk-17 image stream
+                    oc new-build --name=${APP_NAME} \
+                                 --image-stream=ubi8-openjdk-17:latest \
+                                 --binary=true \
+                                 --strategy=source \
+                                 --to=${APP_NAME}:latest
+                  '''
                 }
             }
         }
@@ -116,11 +116,22 @@ spec:
             steps {
                 container('maven') {
                     sh """
-                        export PATH=$HOME/bin:$PATH
-                        mkdir -p ocp
-                        cp target/*.jar ocp/
-                        oc start-build $APP_NAME --from-dir=ocp --follow --wait=true
-                    """
+                        export PATH=${PATH_ADD}:$PATH
+                        
+                        # prepare binary dir for S2I
+                        rm -rf ocp || true
+                        mkdir -p ocp/deployments
+
+                        # if a jar exists (built above), send it; else send source so builder runs maven
+                        if ls target/*.jar >/dev/null 2>&1; then
+                          cp target/*.jar ocp/deployments/
+                        else
+                          cp -r . ocp/
+                        fi
+
+                        # start the binary build and wait for completion
+                        oc start-build ${APP_NAME} --from-dir=ocp --follow --wait
+                      '''
                 }
             }
         }
@@ -129,7 +140,7 @@ spec:
             steps {
                 container('maven') {
                     sh """
-                        export PATH=$HOME/bin:$PATH
+                        export PATH=${PATH_ADD}:$PATH
                         if ! oc get deployment $APP_NAME >/dev/null 2>&1; then
                             oc create deployment $APP_NAME \
                                 --image=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest
@@ -140,7 +151,12 @@ spec:
                                 $APP_NAME=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest
                             oc rollout restart deployment/$APP_NAME
                         fi
-                    """
+                        # Expose service/route
+                        oc expose svc/${APP_NAME} --port=8080 || true
+
+                        echo "Route (if created):"
+                        oc get route ${APP_NAME} -o yaml || true
+                     """
                 }
             }
         }
