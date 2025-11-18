@@ -141,6 +141,7 @@ spec:
                 container('maven') {
                     sh """
                         export PATH=${PATH_ADD}:$PATH
+                    
                         if ! oc get deployment $APP_NAME >/dev/null 2>&1; then
                             oc create deployment $APP_NAME \
                                 --image=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest
@@ -157,8 +158,8 @@ spec:
                         echo "Route (if created):"
                         oc get route ${APP_NAME} -o yaml || true
                      """
-                }
-            }
-        }
+                 }
+             }
+         }
     }
 }
