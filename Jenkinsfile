@@ -102,7 +102,7 @@ spec:
 
             # Create a binary S2I BuildConfig using ubi8-openjdk-17 image stream
                     oc new-build --name=${APP_NAME} \
-                                 --image-stream=ubi8-openjdk-17:latest \
+                                 --image-stream="openshift/ubi8-openjdk-17-runtime:1.15" \
                                  --binary=true \
                                  --strategy=source \
                                  --to=${APP_NAME}:latest
