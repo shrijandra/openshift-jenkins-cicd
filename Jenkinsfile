@@ -116,6 +116,7 @@ spec:
             steps {
                 container('maven') {
                     sh """
+                        export PATH=$HOME/bin:$PATH
                         mkdir -p ocp
                         cp target/*.jar ocp/
                         oc start-build $APP_NAME --from-dir=ocp --follow --wait=true
@@ -128,6 +129,7 @@ spec:
             steps {
                 container('maven') {
                     sh """
+                        export PATH=$HOME/bin:$PATH
                         if ! oc get deployment $APP_NAME >/dev/null 2>&1; then
                             oc create deployment $APP_NAME \
                                 --image=image-registry.openshift-image-registry.svc:5000/$PROJECT/$APP_NAME:latest
