@@ -131,10 +131,11 @@ spec:
 
                         # start the binary build and wait for completion
                         oc start-build ${APP_NAME} --from-dir=ocp --follow --wait
-                      '''
-                }
-            }
-        }
+                    """
+                  }
+              }
+            } 
+         
 
         stage('Deploy to OpenShift') {
             steps {
@@ -163,3 +164,4 @@ spec:
          }
     }
 }
+
